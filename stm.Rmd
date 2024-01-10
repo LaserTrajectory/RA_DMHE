@@ -126,13 +126,33 @@ summarise_all(prop_table, mean)
 
 ```{r}
 
+library(broom)
+library(tidyverse)
+
 out$meta$dummy_mental_health <- as.factor(out$meta$dummy_mental_health)
 
-prep <- estimateEffect(1:20 ~ country_code + dummy_mental_health + s(founded_year), modelPrevFit, meta=out$meta, uncertainty = "Global")
+prep <- estimateEffect(formula = ~ country_code + dummy_mental_health + s(founded_year), modelPrevFit, meta=out$meta, uncertainty = "Global")
 
-summary(prep, topics = 15)
+model <- summary(prep, topics = 6)
+
 
 ```
+
+```{r}
+
+model
+
+```
+
+
+```{r}
+
+library(stargazer)
+
+stargazer(model)
+
+```
+
 
 ```{r}
 
@@ -184,6 +204,64 @@ dev.off()
 library(igraph)
 mod.out.corr <- topicCorr(modelPrevFit)
 plot(mod.out.corr)
+
+```
+
+```{r}
+
+interactModel <- stm(documents = out$documents, vocab = out$vocab, K = 20, prevalence =~ country_code * s(founded_year),
+                    , data = out$meta, init.type = "Spectral")
+
+```
+
+```{r}
+
+intPrep <- estimateEffect(c(15) ~ country_code * s(founded_year), interactModel, metadata=out$meta, uncertainty = "None")
+
+```
+
+
+```{r}
+
+# tiff(file="topic15_UK_US.tiff", units="in", width=9, height=5, res = 300)
+
+plot(intPrep, covariate = "founded_year", model = interactModel, method = "continuous", xlab = "Years", 
+     moderator = "country_code", moderator.value = "gbr", linecol = "blue", printlegend = FALSE, xaxp = c(1930, 2023, 93))
+
+plot(intPrep, covariate = "founded_year", model = interactModel, method = "continuous", xlab = "Years", 
+     moderator = "country_code", moderator.value = "usa", linecol = "red", add = TRUE, printlegend = FALSE, xaxp = c(1930, 2023, 1))
+
+abline(v=2013, col="black")
+
+abline(v=2016, col="grey")
+
+legend(1980, 0.05, c("GBR", "USA", "2013", "2016"), lwd = 2, col = c("blue", "red", "black", "grey"))
+
+# dev.off()
+
+```
+
+```{r}
+
+tiff(file="topic15_UK_India.tiff", units="in", width=9, height=5, res = 300)
+
+plot(intPrep, covariate = "founded_year", model = interactModel, method = "continuous", xlab = "Years", 
+     moderator = "country_code", moderator.value = "gbr", linecol = "blue", printlegend = FALSE, xaxp = c(1930, 2023, 93))
+
+plot(intPrep, covariate = "founded_year", model = interactModel, method = "continuous", xlab = "Years", 
+     moderator = "country_code", moderator.value = "ind", linecol = "red", add = TRUE, printlegend = FALSE, xaxp = c(1930, 2023, 1))
+
+abline(v=2016, col="grey")
+
+legend(1987, 0.05, c("GBR", "India", "2016"), lwd = 2, col = c("blue", "red", "grey"))
+
+dev.off()
+
+```
+
+```{r}
+
+summary(intPrep, topics = 15)
 
 ```
 
